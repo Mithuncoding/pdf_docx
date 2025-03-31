@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#6366f1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Advanced Document Analyzer</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.worker.min.js';
+    </script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Advanced Document Analyzer</h1>
+            <p>Smart AI-powered analysis for documents and images</p>
+        </header>
+        
+        <div class="app-grid">
+            <div class="main-panel">
+        <div class="upload-section">
+            <div class="upload-area" id="dropArea">
+                <svg xmlns="http://www.w3.org/2000/svg" width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                        <h3>Drag & Drop your document or image</h3>
+                        <p>PDF, Word, JPEG, PNG and more</p>
+                        <button class="upload-btn" id="browseBtn">Browse Files</button>
+                        <input type="file" id="fileInput" accept="application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/*,text/plain" hidden>
+                    </div>
+                    
+                    <div class="sample-files">
+                        <h4>Or try a sample file:</h4>
+                        <div class="sample-files-grid">
+                            <div class="sample-file" data-file="sample-pdf">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                                <span>Sample Report</span>
+                                <button class="view-sample-btn" data-file="samples/sample.pdf">View</button>
+                            </div>
+                            <div class="sample-file" data-file="sample-image">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                                    <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                                    <polyline points="21 15 16 10 5 21"></polyline>
+                                </svg>
+                                <span>Sample Image</span>
+                                <button class="view-sample-btn" data-file="samples/sample.png">View</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="filePreview" class="file-preview" style="display: none;">
+                    <div class="preview-header">
+                        <h3 id="previewFileName">File Name</h3>
+                        <button id="closePreview" class="close-btn">×</button>
+                    </div>
+                    <div class="preview-content">
+                        <div id="pdfPreview" class="pdf-preview" style="display: none;">
+                            <canvas id="pdfCanvas"></canvas>
+                            <div class="page-controls">
+                                <button id="prevPage" class="page-btn">Previous</button>
+                                <span id="pageInfo">Page 1 of 1</span>
+                                <button id="nextPage" class="page-btn">Next</button>
+                            </div>
+                        </div>
+                        <div id="imagePreview" class="image-preview" style="display: none;">
+                            <img id="previewImg" src="" alt="Preview">
+                        </div>
+                        <div id="textPreview" class="text-preview" style="display: none;">
+                            <pre id="previewText"></pre>
+                        </div>
+            </div>
+        </div>
+        
+        <div class="analysis-options">
+                    <div class="section-header">
+            <h3>Analysis Options</h3>
+                        <div class="toggle-container">
+                            <label class="toggle-switch">
+                                <input type="checkbox" id="ocrToggle" checked>
+                                <span class="toggle-slider"></span>
+                                <span class="toggle-label">Enable OCR</span>
+                                <span class="tooltip">Optical Character Recognition for images and scanned documents</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <p class="analysis-info">Select the type of analysis you want to perform on your document or image</p>
+                    
+            <div class="options-grid">
+                        <div class="option-card">
+                <button class="option-btn" data-option="summarize">Summarize</button>
+                            <p class="option-description">Generate a concise summary of the document's key information</p>
+                        </div>
+                        <div class="option-card">
+                <button class="option-btn" data-option="extract-key-points">Extract Key Points</button>
+                            <p class="option-description">Identify and list the most important points from the content</p>
+                        </div>
+                        <div class="option-card">
+                <button class="option-btn" data-option="sentiment">Sentiment Analysis</button>
+                            <p class="option-description">Analyze the emotional tone and sentiment of the document</p>
+                        </div>
+                        <div class="option-card">
+                <button class="option-btn" data-option="questions">Generate Questions</button>
+                            <p class="option-description">Create a set of questions and answers based on the content</p>
+                        </div>
+                        <div class="option-card">
+                <button class="option-btn" data-option="entities">Extract Entities</button>
+                            <p class="option-description">Identify people, organizations, locations, and other entities</p>
+                        </div>
+                        <div class="option-card">
+                            <button class="option-btn highlight-option" data-option="custom">Custom Prompt</button>
+                            <p class="option-description">Create your own custom analysis instructions</p>
+                        </div>
+            </div>
+                    
+            <div class="custom-prompt-container" style="display: none;">
+                        <textarea id="customPrompt" placeholder="Enter your custom analysis instructions here... Be specific about what insights you want to extract from the document."></textarea>
+                    </div>
+                    
+                    <div class="analysis-type-toggle">
+                        <label class="type-toggle-label">
+                            <input type="radio" name="analysisType" value="document" checked> Document Analysis
+                        </label>
+                        <label class="type-toggle-label">
+                            <input type="radio" name="analysisType" value="image"> Image Description
+                        </label>
+                    </div>
+                    
+                    <button id="startAnalysisBtn" class="start-analysis-btn">Start Analysis</button>
+                </div>
+                
+                <!-- Confirmation Dialog -->
+                <div id="analysisConfirmation" class="confirmation-dialog" style="display: none;">
+                    <div class="confirmation-content">
+                        <div class="confirmation-header">
+                            <h3>Confirm Analysis</h3>
+                            <button class="close-btn" id="closeConfirmDialog">×</button>
+                        </div>
+                        <div class="confirmation-body">
+                            <p>You are about to analyze: <strong id="confirmFileName">document.pdf</strong></p>
+                            <div class="confirmation-details">
+                                <div class="detail-item">
+                                    <span class="detail-label">Analysis Type:</span>
+                                    <span id="confirmAnalysisType" class="detail-value">Document Analysis</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">Operation:</span>
+                                    <span id="confirmOperation" class="detail-value">Summarize</span>
+                                </div>
+                                <div class="detail-item">
+                                    <span class="detail-label">OCR Enabled:</span>
+                                    <span id="confirmOcr" class="detail-value">Yes</span>
+                                </div>
+                            </div>
+                            <div id="confirmCustomPrompt" class="custom-prompt-preview" style="display: none;">
+                                <h4>Custom Prompt:</h4>
+                                <p id="customPromptPreview"></p>
+                            </div>
+                        </div>
+                        <div class="confirmation-footer">
+                            <button id="cancelAnalysisBtn" class="cancel-btn">Cancel</button>
+                            <button id="confirmAnalysisBtn" class="confirm-btn">Confirm & Analyze</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Quick Actions Floating Panel -->
+                <div class="quick-actions-panel">
+                    <button id="quickHelp" class="quick-action-btn" title="Help">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+                            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                        </svg>
+                    </button>
+                    <button id="quickFullscreen" class="quick-action-btn" title="Fullscreen">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                            <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                            <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                            <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Keyboard Shortcuts Helper -->
+                <div id="keyboardShortcuts" class="keyboard-shortcuts" style="display: none;">
+                    <div class="shortcuts-content">
+                        <div class="shortcuts-header">
+                            <h3>Keyboard Shortcuts</h3>
+                            <button class="close-btn" id="closeShortcutsBtn">×</button>
+                        </div>
+                        <div class="shortcuts-body">
+                            <div class="shortcut-group">
+                                <h4>File Operations</h4>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">Ctrl + O</span>
+                                    <span class="shortcut-desc">Open File</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">Ctrl + S</span>
+                                    <span class="shortcut-desc">Save Analysis</span>
+                                </div>
+                            </div>
+                            <div class="shortcut-group">
+                                <h4>Analysis</h4>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">Ctrl + Enter</span>
+                                    <span class="shortcut-desc">Start Analysis</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">Alt + 1-5</span>
+                                    <span class="shortcut-desc">Select Analysis Option</span>
+                                </div>
+                            </div>
+                            <div class="shortcut-group">
+                                <h4>Navigation</h4>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">Esc</span>
+                                    <span class="shortcut-desc">Close Dialogs</span>
+                                </div>
+                                <div class="shortcut-item">
+                                    <span class="shortcut-key">?</span>
+                                    <span class="shortcut-desc">Show Shortcuts</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="advanced-options">
+                    <div class="section-header">
+                        <h3>Advanced Features</h3>
+                        <button id="advancedToggle" class="toggle-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="chevron-down">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <div class="advanced-content" style="display:none">
+                        <div class="advanced-grid">
+                            <button id="compareDocuments" class="feature-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="3" width="7" height="7"></rect>
+                                    <rect x="14" y="14" width="7" height="7"></rect>
+                                    <rect x="3" y="14" width="7" height="7"></rect>
+                                </svg>
+                                Compare Documents
+                            </button>
+                            
+                            <button id="generatePresentation" class="feature-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                                </svg>
+                                Generate Presentation
+                            </button>
+                            
+                            <button id="createKnowledgeGraph" class="feature-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                                </svg>
+                                Knowledge Graph
+                            </button>
+                            
+                            <button id="extractCitations" class="feature-btn">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" y1="13" x2="8" y2="13"></line>
+                                    <line x1="16" y1="17" x2="8" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                                Extract Citations
+                            </button>
+                        </div>
+                        
+                        <div id="multiDocumentSelect" class="multi-doc-select" style="display:none">
+                            <h4>Select Documents to Compare</h4>
+                            <div class="doc-select-list">
+                            </div>
+                        </div>
+            </div>
+        </div>
+        
+        <div class="status-section">
+            <div id="loadingIndicator" class="loading-indicator" style="display: none;">
+                <div class="spinner"></div>
+                        <p>Analyzing document...</p>
+            </div>
+            <div id="progressBar" class="progress-container" style="display: none;">
+                <div class="progress-bar"></div>
+                <p class="progress-text">0%</p>
+            </div>
+        </div>
+        
+        <div class="results-section" style="display: none;">
+            <div class="results-header">
+                <h2>Analysis Results</h2>
+                <div class="results-actions">
+                    <button id="copyResults" class="action-btn">Copy</button>
+                    <button id="downloadResults" class="action-btn">Download</button>
+                            <button id="shareResults" class="action-btn">Share</button>
+                            <button id="saveToCloud" class="action-btn">Save</button>
+                        </div>
+                    </div>
+                    <div class="results-content" id="resultsContent"></div>
+                </div>
+                
+                <div id="visualizationContainer" class="visualization-container" style="display: none;">
+                </div>
+            </div>
+            
+            <div class="side-panel">
+                <div class="panel-section">
+                    <div class="section-header with-border">
+                        <h3>Document Collection</h3>
+                        <span class="doc-count">0 documents</span>
+                    </div>
+                    <div id="documentList" class="document-list">
+                    </div>
+                </div>
+                
+                <div class="panel-section">
+                    <div class="section-header with-border">
+                        <h3>Saved Analyses</h3>
+                    </div>
+                    <div id="savedAnalyses" class="saved-analyses">
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="copyright" id="copyrightText">
+            © 2025 Mithun. All Rights Reserved.
+        </div>
+    </div>
+    
+    <script src="script.js"></script>
+    
+    <script src="advanced-features.js"></script>
+</body>
+</html>
