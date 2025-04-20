@@ -1135,25 +1135,46 @@ async function processImage(file) {
     }
 }
 
-// Process Word document
 async function processWordDocument(file) {
     try {
         updateProgress(10, 'Processing Word document...');
         
-        // This is a simplified implementation
-        // In a real app, you would use a Word document parsing library
-        
-        // Show a message about Word document support
+        // Use mammoth.js to extract text from DOCX files
         updateProgress(50, 'Extracting text from Word document...');
-        
-        // For demo purposes, just read as text
-        const text = await readFileAsText(file);
-        
-        // Store the extracted text
+        let text = '';
+        let html = '';
+        if (window.mammoth) {
+            try {
+                const arrayBuffer = await file.arrayBuffer();
+                const result = await mammoth.convertToHtml({ arrayBuffer });
+                html = result.value;
+                // Extract plain text from HTML
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = html;
+                text = tempDiv.innerText;
+                // Display HTML in the preview
+                const textPreview = document.getElementById('textPreview');
+                if (textPreview) {
+                    textPreview.innerHTML = html;
+                }
+            } catch (err) {
+                console.error('Mammoth failed, fallback to raw text', err);
+                text = await readFileAsText(file);
+                const textPreview = document.getElementById('textPreview');
+                if (textPreview) {
+                    textPreview.textContent = text;
+                }
+            }
+        } else {
+            // Fallback to reading as plain text
+            text = await readFileAsText(file);
+            const textPreview = document.getElementById('textPreview');
+            if (textPreview) {
+                textPreview.textContent = text;
+            }
+        }
         window.extractedText = text;
-        
         updateProgress(70, 'Text extraction complete');
-        
         return { text };
     } catch (error) {
         console.error('Error processing Word document:', error);
@@ -1563,7 +1584,13 @@ function displayFilePreview(file) {
             imagePreview.style.display = 'flex';
             displayImagePreview(file);
         }
-    } else if (file.type.includes('text') || file.type.includes('word')) {
+    } else if (file.type.includes('officedocument.wordprocessingml') || file.name.endsWith('.docx')) {
+        // DOCX: display HTML from mammoth.js (already set in processWordDocument)
+        if (textPreview) {
+            textPreview.style.display = 'flex';
+            // Do NOT call displayTextPreview for docx, as processWordDocument already set innerHTML
+        }
+    } else if (file.type.includes('text')) {
         if (textPreview) {
             textPreview.style.display = 'flex';
             displayTextPreview(file);
@@ -1583,27 +1610,6 @@ function displayPdfPreview(file) {
     
     try {
         const pdfPreview = document.getElementById('pdfPreview');
-        
-        // Add fullscreen button if it doesn't exist
-        if (pdfPreview && !pdfPreview.querySelector('.fullscreen-btn')) {
-            const fullscreenBtn = document.createElement('button');
-            fullscreenBtn.className = 'fullscreen-btn';
-            fullscreenBtn.innerHTML = `
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-                </svg>
-                <span>Fullscreen</span>
-            `;
-            fullscreenBtn.addEventListener('click', () => toggleFullscreen('pdf'));
-            
-            // Insert after page controls
-            const pageControls = pdfPreview.querySelector('.page-controls');
-            if (pageControls) {
-                pageControls.after(fullscreenBtn);
-            } else {
-                pdfPreview.appendChild(fullscreenBtn);
-            }
-        }
         
         const reader = new FileReader();
         
@@ -1683,20 +1689,6 @@ function displayImagePreview(file) {
     
     if (!imagePreview) return;
     
-    // Add fullscreen button if it doesn't exist
-    if (!imagePreview.querySelector('.fullscreen-btn')) {
-        const fullscreenBtn = document.createElement('button');
-        fullscreenBtn.className = 'fullscreen-btn';
-        fullscreenBtn.innerHTML = `
-            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-            </svg>
-            <span>Fullscreen</span>
-        `;
-        fullscreenBtn.addEventListener('click', () => toggleFullscreen('image'));
-        imagePreview.appendChild(fullscreenBtn);
-    }
-    
     // Clear previous image
     imagePreview.innerHTML = '';
     
@@ -1704,20 +1696,8 @@ function displayImagePreview(file) {
     const img = document.createElement('img');
     img.alt = file.name;
     
-    // Add fullscreen button again (since we cleared the container)
-    const fullscreenBtn = document.createElement('button');
-    fullscreenBtn.className = 'fullscreen-btn';
-    fullscreenBtn.innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
-        </svg>
-        <span>Fullscreen</span>
-    `;
-    fullscreenBtn.addEventListener('click', () => toggleFullscreen('image'));
-    
-    // Add image and button to container
+    // Add image to container
     imagePreview.appendChild(img);
-    imagePreview.appendChild(fullscreenBtn);
     
     // Create URL for the image
     const imageURL = URL.createObjectURL(file);
@@ -1734,16 +1714,22 @@ function displayImagePreview(file) {
 // Display text preview
 function displayTextPreview(file) {
     const previewText = document.getElementById('previewText');
-    if (!previewText) return;
-    
+    const textPreview = document.getElementById('textPreview');
+    if (!previewText || !textPreview) return;
+    // If DOCX, skip (handled by processWordDocument)
+    if (file.type.includes('officedocument.wordprocessingml') || file.name.endsWith('.docx')) {
+        // Already handled by processWordDocument
+        return;
+    }
     const reader = new FileReader();
-    
     reader.onload = function() {
         // Display the first 2000 characters
         const text = this.result.substring(0, 2000);
         previewText.textContent = text + (this.result.length > 2000 ? '...' : '');
+        // For .txt, ensure plain text
+        textPreview.innerHTML = '';
+        previewText.style.display = 'block';
     };
-    
     reader.readAsText(file);
 }
 
@@ -2157,7 +2143,7 @@ function initQuickActions() {
     
     if (quickFullscreen) {
         quickFullscreen.addEventListener('click', () => {
-            toggleFullscreen('preview');
+            toggleFullscreen('pdf');
         });
     }
 }
@@ -2674,19 +2660,119 @@ function setupFileUploadEvents() {
 function setupUIElements() {
     // Log available UI elements for debugging
     console.log('Setting up UI elements');
-    
+
+    // --- Results Action Buttons ---
+    const copyBtn = document.getElementById('copyResults');
+    const downloadBtn = document.getElementById('downloadResults');
+    const shareBtn = document.getElementById('shareResults');
+    const saveBtn = document.getElementById('saveToCloud');
+    const resultsContent = document.getElementById('resultsContent');
+
+    // Helper to get plain text from results (fallback to empty string)
+    function getResultsText() {
+        return resultsContent ? resultsContent.innerText || resultsContent.textContent || '' : '';
+    }
+
+    // Copy to clipboard
+    if (copyBtn) {
+        copyBtn.addEventListener('click', () => {
+            const text = getResultsText();
+            if (text) {
+                navigator.clipboard.writeText(text)
+                    .then(() => showToast('Results copied to clipboard', 'success'))
+                    .catch(() => showToast('Failed to copy results', 'error'));
+            } else {
+                showToast('No results to copy', 'info');
+            }
+        });
+    }
+
+    // Download as .txt
+    if (downloadBtn) {
+        downloadBtn.addEventListener('click', () => {
+            const text = getResultsText();
+            if (text) {
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'analysis_results.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                showToast('Results downloaded', 'success');
+            } else {
+                showToast('No results to download', 'info');
+            }
+        });
+    }
+
+    // Share using Web Share API or fallback
+    if (shareBtn) {
+        shareBtn.addEventListener('click', async () => {
+            const text = getResultsText();
+            if (text) {
+                if (navigator.share) {
+                    try {
+                        await navigator.share({
+                            title: 'Analysis Results',
+                            text: text
+                        });
+                        showToast('Results shared', 'success');
+                    } catch (err) {
+                        showToast('Share cancelled or failed', 'info');
+                    }
+                } else {
+                    // Fallback: copy to clipboard
+                    navigator.clipboard.writeText(text)
+                        .then(() => showToast('Results copied (share not supported)', 'info'))
+                        .catch(() => showToast('Share not supported and copy failed', 'error'));
+                }
+            } else {
+                showToast('No results to share', 'info');
+            }
+        });
+    }
+
+    // Save to localStorage (history)
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            const text = getResultsText();
+            if (text) {
+                // Retrieve or create history
+                let analysisHistory = JSON.parse(localStorage.getItem('analysisHistory')) || [];
+                // Create a new entry
+                const newEntry = {
+                    id: Date.now().toString(),
+                    documentName: fileName || 'Analysis',
+                    analysisType: currentAnalysisOption || 'Analysis',
+                    results: text,
+                    timestamp: Date.now()
+                };
+                analysisHistory.unshift(newEntry);
+                localStorage.setItem('analysisHistory', JSON.stringify(analysisHistory));
+                showToast('Results saved to history', 'success');
+                updateHistoryDisplay && updateHistoryDisplay();
+            } else {
+                showToast('No results to save', 'info');
+            }
+        });
+    }
+
+    // --- Other UI elements ---
     const startAnalysisBtn = document.getElementById('startAnalysisBtn');
     if (startAnalysisBtn) {
         console.log('Found start analysis button');
     } else {
         console.warn('Start analysis button not found');
     }
-    
+
     // Update copyright year
     const currentYear = new Date().getFullYear();
     const copyrightEl = document.getElementById('copyrightText');
     if (copyrightEl) {
-        copyrightEl.textContent = `© 2025 Mithun. All Rights Reserved.`;
+        copyrightEl.textContent = ` 2025 Mithun. All Rights Reserved.`;
     }
 }
 

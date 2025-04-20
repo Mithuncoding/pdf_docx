@@ -13,6 +13,7 @@
     <script>
         pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.8.162/pdf.worker.min.js';
     </script>
+    <script src="mammoth.browser.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -75,6 +76,14 @@
                                 <button id="prevPage" class="page-btn">Previous</button>
                                 <span id="pageInfo">Page 1 of 1</span>
                                 <button id="nextPage" class="page-btn">Next</button>
+                                <button id="quickFullscreen" class="quick-action-btn" title="Fullscreen" style="margin-left: 12px;">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
+                                        <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
+                                        <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
+                                        <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
+                                    </svg>
+                                </button>
                             </div>
                         </div>
                         <div id="imagePreview" class="image-preview" style="display: none;">
@@ -186,14 +195,6 @@
                             <circle cx="12" cy="12" r="10"></circle>
                             <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
                             <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                        </svg>
-                    </button>
-                    <button id="quickFullscreen" class="quick-action-btn" title="Fullscreen">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M8 3H5a2 2 0 0 0-2 2v3"></path>
-                            <path d="M21 8V5a2 2 0 0 0-2-2h-3"></path>
-                            <path d="M3 16v3a2 2 0 0 0 2 2h3"></path>
-                            <path d="M16 21h3a2 2 0 0 0 2-2v-3"></path>
                         </svg>
                     </button>
                 </div>
